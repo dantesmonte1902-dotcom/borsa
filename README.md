@@ -33,6 +33,7 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 2. Telegram/Discord/email ve veritabanı ayarlarını doldurun.
 3. `storage/schema.sql` içeriğini MySQL/MariaDB üzerinde çalıştırın.
 4. Web kökünü mümkünse `public/` dizinine yönlendirin.
+5. Shared hosting kullanıyorsanız kök dizindeki `index.php` dosyası `public/index.php` için köprü görevi görür.
 
 ## API
 
@@ -52,3 +53,9 @@ php <project_root>/cron/refresh_data.php
 - Gizli anahtarlar `.env` üzerinden yüklenir.
 - PDO prepared statements için örnek repository katmanı eklendi.
 - Session, CSRF ve XSS yardımcıları bootstrap altında hazırlandı.
+
+
+## Türkçe kullanım kılavuzu
+
+- Ayrıntılı Türkçe kurulum ve kullanım anlatımı için `/home/runner/work/borsa/borsa/readme.txt` dosyasına bakın.
+- Kök erişim için `/home/runner/work/borsa/borsa/index.php` eklendi; `public/index.php` panelini yükler.
