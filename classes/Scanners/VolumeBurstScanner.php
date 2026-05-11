@@ -9,7 +9,9 @@ final class VolumeBurstScanner
         $currentVolume = (float) ($snapshot['volume'] ?? 0);
         $averageVolume = (float) ($indicators['volume_sma_20'][array_key_last($indicators['volume_sma_20'])] ?? 0);
         $price = (float) ($snapshot['close'] ?? 0);
-        $previousClose = (float) ($candles[array_key_last($candles) - 1]['close'] ?? $price);
+        $recentCandles = array_values($candles);
+        $previousCandle = $recentCandles[count($recentCandles) - 2] ?? end($recentCandles) ?: ['close' => $price];
+        $previousClose = (float) ($previousCandle['close'] ?? $price);
         $atr = (float) ($indicators['atr_14'][array_key_last($indicators['atr_14'])] ?? 0);
 
         $volumeRatio = $averageVolume > 0 ? $currentVolume / $averageVolume : 0;

@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     threshold_value DECIMAL(14,4) NULL,
     channel VARCHAR(20) NOT NULL,
     cooldown_minutes INT UNSIGNED NOT NULL DEFAULT 15,
-    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    is_active BOOL NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY idx_alert_symbol_active (symbol, is_active)
 );

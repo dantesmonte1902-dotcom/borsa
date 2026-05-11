@@ -118,8 +118,11 @@ final class HttpClient
         $records = array_values(array_filter($records, static fn (float $timestamp): bool => $timestamp >= $windowStart));
 
         if (count($records) >= $perMinute) {
-            $sleepSeconds = max(0.0, 60 - ($now - $records[0]));
-            usleep((int) ceil($sleepSeconds * 1_000_000));
+            $targetTime = ((float) $records[0]) + 60.0;
+            $sleepMicroseconds = max(0, (int) round(($targetTime - $now) * 1_000_000));
+            if ($sleepMicroseconds > 0) {
+                usleep($sleepMicroseconds);
+            }
             $now = microtime(true);
             $windowStart = $now - 60;
             $records = array_values(array_filter($records, static fn (float $timestamp): bool => $timestamp >= $windowStart));
