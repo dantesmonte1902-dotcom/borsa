@@ -16,7 +16,7 @@ return [
         ],
     ],
     'legacy_broadcast' => [
-        'enabled' => filter_var(getenv('ALERT_LEGACY_BROADCAST_ENABLED') ?: true, FILTER_VALIDATE_BOOL),
+        'enabled' => filter_var(getenv('ALERT_LEGACY_BROADCAST_ENABLED') ?: false, FILTER_VALIDATE_BOOL),
         'minimum_score' => (float) (getenv('ALERT_LEGACY_MINIMUM_SCORE') ?: 65),
         'channels' => ['telegram', 'discord', 'email', 'browser'],
         'cooldown_minutes' => (int) (getenv('ALERT_LEGACY_COOLDOWN_MINUTES') ?: 30),

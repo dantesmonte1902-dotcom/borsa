@@ -7,6 +7,7 @@ namespace App\Alerts;
 use App\Services\AlertRepository;
 use App\Services\Config;
 use App\Services\Platform;
+use RuntimeException;
 
 final class AlertProcessor
 {
@@ -151,7 +152,7 @@ final class AlertProcessor
                 'metric' => 'genel skor',
                 'operator' => 'üzerine çıktı',
             ],
-            default => throw new \RuntimeException('Desteklenmeyen alarm tipi: ' . $type),
+            default => throw new RuntimeException('Desteklenmeyen alarm tipi: ' . $type),
         };
     }
 

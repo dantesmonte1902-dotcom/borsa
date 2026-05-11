@@ -141,6 +141,7 @@ cron/alerts.php artık aktif alerts kayıtlarını işler.
 Alarm durumu storage/cache/alerts-state.json içinde tutulur.
 Tekrarlayan aktif sinyaller baskılanır, cooldown ve kanal bazlı rate limit uygulanır.
 Veritabanı erişimi varsa notification_logs ve cron_logs tablolarına audit kaydı yazılır.
+Eski top-skor yayın akışı yalnızca ALERT_LEGACY_BROADCAST_ENABLED=true ise açılır.
 
 
 7) ESKİ SCRIPTLER NE İŞE YARAR?

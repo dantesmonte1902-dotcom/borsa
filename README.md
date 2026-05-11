@@ -63,7 +63,7 @@ php <project_root>/cron/refresh_data.php
 
 `cron/scan.php` artık tarama çıktısını hem `storage/logs` altına JSON olarak yazar hem de veritabanı erişimi varsa `symbols` ve `scanner_results` tablolarına kalıcı kaydeder.
 
-`cron/alerts.php` artık veritabanındaki aktif `alerts` kayıtlarını işler, alarm durumunu `storage/cache/alerts-state.json` içinde tutar, tekrar eden aktif sinyalleri bastırır ve kanal bazlı rate limit/cooldown kurallarını uygular. Veritabanı erişimi varsa `notification_logs` ve `cron_logs` tablolarına audit kaydı da bırakır.
+`cron/alerts.php` artık veritabanındaki aktif `alerts` kayıtlarını işler, alarm durumunu `storage/cache/alerts-state.json` içinde tutar, tekrar eden aktif sinyalleri bastırır ve kanal bazlı rate limit/cooldown kurallarını uygular. Veritabanı erişimi varsa `notification_logs` ve `cron_logs` tablolarına audit kaydı da bırakır. Eski top-skor yayın akışı yalnızca `ALERT_LEGACY_BROADCAST_ENABLED=true` olduğunda devreye girer.
 
 ## Güvenlik notları
 
