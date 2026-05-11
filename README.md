@@ -1,0 +1,2 @@
+# borsa
+borsa şeyleri
