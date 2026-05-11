@@ -13,6 +13,10 @@ const numberFormatter = new Intl.NumberFormat('tr-TR');
 const compactFormatter = new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 });
 const currencyFormatter = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+function buildStockDetailUrl(symbol) {
+    return `./stock.php?symbol=${encodeURIComponent(symbol || '')}`;
+}
+
 const quickFilters = [
     {
         id: 'all',
@@ -414,6 +418,15 @@ function renderDetail(item) {
                 ${infoTile('İşlem Hacmi', formatCompact(item.snapshot?.volume || null))}
                 ${infoTile('Günlük Aralık', `${formatPrice(item.snapshot?.low || null)} - ${formatPrice(item.snapshot?.high || null)}`)}
                 ${infoTile('İşlem Değeri', `₺${formatCompact(item.snapshot?.value_traded || null)}`)}
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="${escapeHtml(buildStockDetailUrl(item.snapshot?.symbol || ''))}" class="inline-flex items-center justify-center rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
+                    Tam analiz sayfasını aç
+                </a>
+                <span class="inline-flex items-center rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
+                    Candle chart ve detaylı teknik görünüm ayrı sayfada hazır.
+                </span>
             </div>
 
             <div>

@@ -12,7 +12,9 @@ Bu proje BIST hisseleri için:
 
 Ana giriş dosyaları:
 - <project_root>/index.php
+- <project_root>/stock.php
 - <project_root>/public/index.php
+- <project_root>/public/stock.php
 - <project_root>/api/market.php
 - <project_root>/cron/scan.php
 - <project_root>/cron/alerts.php
@@ -20,6 +22,7 @@ Ana giriş dosyaları:
 
 Not:
 Kök dizinde index.php eklendi. Böylece shared hosting veya cPanel üzerinde alan adını doğrudan proje köküne yönlendirseniz bile panel açılabilir. Eğer imkan varsa yine de en doğru yöntem public klasörünü web root yapmaktır.
+Benzer şekilde stock.php dosyası da public/stock.php için köprü görevi görür.
 
 
 2) KLASÖR YAPISI KISA AÇIKLAMA

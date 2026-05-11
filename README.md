@@ -34,11 +34,17 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 3. `storage/schema.sql` içeriğini MySQL/MariaDB üzerinde çalıştırın.
 4. Web kökünü mümkünse `public/` dizinine yönlendirin.
 5. Shared hosting kullanıyorsanız kök dizindeki `index.php` dosyası `public/index.php` için köprü görevi görür.
+6. Tek hisse detay ekranı için `stock.php` veya `public/stock.php?symbol=BIST:ASELS` adresini kullanabilirsiniz.
 
 ## API
 
 - `GET /api/market.php?limit=5` : skorlu piyasa özeti
 - `GET /api/market.php?symbol=BIST:ASELS` : tek hisse analizi
+
+## Web ekranları
+
+- `/index.php` veya `/public/index.php` : ana dashboard
+- `/stock.php?symbol=BIST:ASELS` : TradingView Lightweight Charts destekli hisse detay ekranı
 
 ## Cron örnekleri
 
