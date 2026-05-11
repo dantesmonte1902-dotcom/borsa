@@ -11,12 +11,12 @@ Bu proje BIST hisseleri için:
 - web panelinde sonuçları gösterir.
 
 Ana giriş dosyaları:
-- /home/runner/work/borsa/borsa/index.php
-- /home/runner/work/borsa/borsa/public/index.php
-- /home/runner/work/borsa/borsa/api/market.php
-- /home/runner/work/borsa/borsa/cron/scan.php
-- /home/runner/work/borsa/borsa/cron/alerts.php
-- /home/runner/work/borsa/borsa/cron/refresh_data.php
+- <project_root>/index.php
+- <project_root>/public/index.php
+- <project_root>/api/market.php
+- <project_root>/cron/scan.php
+- <project_root>/cron/alerts.php
+- <project_root>/cron/refresh_data.php
 
 Not:
 Kök dizinde index.php eklendi. Böylece shared hosting veya cPanel üzerinde alan adını doğrudan proje köküne yönlendirseniz bile panel açılabilir. Eğer imkan varsa yine de en doğru yöntem public klasörünü web root yapmaktır.
@@ -24,26 +24,26 @@ Kök dizinde index.php eklendi. Böylece shared hosting veya cPanel üzerinde al
 
 2) KLASÖR YAPISI KISA AÇIKLAMA
 ------------------------------
-- /home/runner/work/borsa/borsa/classes
+- <project_root>/classes
   Uygulamanın PHP sınıfları burada yer alır.
-- /home/runner/work/borsa/borsa/config
+- <project_root>/config
   Ortam ve uygulama ayarları burada tutulur.
-- /home/runner/work/borsa/borsa/api
+- <project_root>/api
   JSON çıktı veren API dosyaları.
-- /home/runner/work/borsa/borsa/cron
+- <project_root>/cron
   Cron ile çalıştırılacak görev dosyaları.
-- /home/runner/work/borsa/borsa/public
+- <project_root>/public
   Tarayıcıdan açılacak panel dosyaları.
-- /home/runner/work/borsa/borsa/assets/js
+- <project_root>/assets/js
   Dashboard javascript dosyaları.
-- /home/runner/work/borsa/borsa/storage
+- <project_root>/storage
   Cache, log ve SQL şeması.
 
 
 3) KURULUM ADIMLARI
 -------------------
 Adım 1:
-/home/runner/work/borsa/borsa/.env.example dosyasını kopyalayın ve adını .env yapın.
+<project_root>/.env.example dosyasını kopyalayın ve adını .env yapın.
 
 Adım 2:
 .env içinde aşağıdaki alanları doldurun:
@@ -63,15 +63,15 @@ Adım 2:
 - FINNHUB_TOKEN
 
 Adım 3:
-Veritabanı gerekiyorsa /home/runner/work/borsa/borsa/storage/schema.sql dosyasını MySQL/MariaDB üzerinde çalıştırın.
+Veritabanı gerekiyorsa <project_root>/storage/schema.sql dosyasını MySQL/MariaDB üzerinde çalıştırın.
 
 Adım 4:
 Sunucuda PHP 8.3+ ve cURL uzantısının açık olduğundan emin olun.
 
 Adım 5:
 Web erişimi için iki seçenek vardır:
-- Önerilen: domain veya subdomain kökünü /home/runner/work/borsa/borsa/public klasörüne yönlendirin.
-- Alternatif: domain kökünü proje klasörüne yönlendirin. Bu durumda /home/runner/work/borsa/borsa/index.php devreye girer.
+- Önerilen: domain veya subdomain kökünü <project_root>/public klasörüne yönlendirin.
+- Alternatif: domain kökünü proje klasörüne yönlendirin. Bu durumda <project_root>/index.php devreye girer.
 
 
 4) PANELİ NASIL AÇARIM?
@@ -82,7 +82,7 @@ Tarayıcıdan şu yollardan biri açılır:
 - Eğer public ayrı root ise doğrudan public içeriği açılır.
 
 Panel dosyası:
-- /home/runner/work/borsa/borsa/public/index.php
+- <project_root>/public/index.php
 
 Bu panel şunları gösterir:
 - genel özet kartları
@@ -120,29 +120,29 @@ API çıktısında temel olarak şunlar gelir:
 Aşağıdaki dosyalar cron için hazırlanmıştır:
 
 1. Tarama çalıştır:
-php /home/runner/work/borsa/borsa/cron/scan.php
+php <project_root>/cron/scan.php
 
 2. Alarm kontrolü yap:
-php /home/runner/work/borsa/borsa/cron/alerts.php
+php <project_root>/cron/alerts.php
 
 3. Veri/cache yenile:
-php /home/runner/work/borsa/borsa/cron/refresh_data.php
+php <project_root>/cron/refresh_data.php
 
 Örnek cPanel cron:
-*/5 * * * * /usr/local/bin/php /home/runner/work/borsa/borsa/cron/scan.php
-*/10 * * * * /usr/local/bin/php /home/runner/work/borsa/borsa/cron/alerts.php
-0 * * * * /usr/local/bin/php /home/runner/work/borsa/borsa/cron/refresh_data.php
+*/5 * * * * /usr/local/bin/php <project_root>/cron/scan.php
+*/10 * * * * /usr/local/bin/php <project_root>/cron/alerts.php
+0 * * * * /usr/local/bin/php <project_root>/cron/refresh_data.php
 
 
 7) ESKİ SCRIPTLER NE İŞE YARAR?
 -------------------------------
-- /home/runner/work/borsa/borsa/hisse-isim-cek.php
+- <project_root>/hisse-isim-cek.php
   Piyasayı analiz eder ve çıktılarını dosyalara yazar.
 
-- /home/runner/work/borsa/borsa/bot.php
+- <project_root>/bot.php
   Oluşan grafik/alarm akışını bildirime dönüştürmek için kullanılır.
 
-- /home/runner/work/borsa/borsa/chart.js
+- <project_root>/chart.js
   Puppeteer tabanlı ekran görüntüsü/grafik üretimi için yardımcı script.
 
 Not:
@@ -153,7 +153,7 @@ Eski scriptler geriye dönük yardımcı giriş noktaları gibi düşünülebili
 8) SIK KARŞILAŞILAN DURUMLAR
 ----------------------------
 Sorun: index.php yoktu, site açılmıyordu.
-Cevap: Artık /home/runner/work/borsa/borsa/index.php var. Kökten açılış için kullanılabilir.
+Cevap: Artık <project_root>/index.php var. Kökten açılış için kullanılabilir.
 
 Sorun: Veri sağlayıcıya erişilemiyor.
 Cevap: Sistem bazı durumlarda fallback veri ile çalışabilir. Yine de gerçek kullanımda dış servis erişimleri kontrol edilmelidir.
