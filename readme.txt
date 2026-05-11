@@ -139,7 +139,7 @@ php <project_root>/cron/refresh_data.php
 Not:
 cron/alerts.php artık aktif alerts kayıtlarını işler.
 Alarm durumu storage/cache/alerts-state.json içinde tutulur.
-Tekrarlayan aktif sinyaller bastırılır, cooldown ve kanal bazlı rate limit uygulanır.
+Tekrarlayan aktif sinyaller baskılanır, cooldown ve kanal bazlı rate limit uygulanır.
 Veritabanı erişimi varsa notification_logs ve cron_logs tablolarına audit kaydı yazılır.
 
 

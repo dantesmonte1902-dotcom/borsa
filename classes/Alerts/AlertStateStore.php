@@ -49,7 +49,7 @@ final class AlertStateStore
     {
         $directory = dirname($this->path);
         if (!is_dir($directory)) {
-            mkdir($directory, 0777, true);
+            mkdir($directory, 0755, true);
         }
 
         file_put_contents($this->path, json_encode($this->state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
