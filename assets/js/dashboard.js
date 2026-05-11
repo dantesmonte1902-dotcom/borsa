@@ -392,7 +392,7 @@ function renderDetail(item) {
 
     const rsi = getLastNumericValue(item.indicators?.rsi_14);
     const ema20 = getLastNumericValue(item.indicators?.ema_20);
-    const sma50 = getLastNumericValue(item.indicators?.sma_50);
+    const sma20 = getLastNumericValue(item.indicators?.sma_20);
     const atr = getLastNumericValue(item.indicators?.atr_14);
     const macdValue = getLastNumericValue(item.indicators?.macd?.macd || item.indicators?.macd);
     const latestComment = (item.comments || []).join(' ') || 'Henüz yorum üretilmedi.';
@@ -459,7 +459,7 @@ function renderDetail(item) {
                     ${infoTile('RSI 14', formatNumber(rsi, 2))}
                     ${infoTile('MACD', formatNumber(macdValue, 3))}
                     ${infoTile('EMA 20', formatPrice(ema20))}
-                    ${infoTile('SMA 50', formatPrice(sma50))}
+                    ${infoTile('SMA 20', formatPrice(sma20))}
                     ${infoTile('ATR 14', formatNumber(atr, 3))}
                     ${infoTile('Free Float', formatCompact(item.snapshot?.free_float_shares || null))}
                 </div>

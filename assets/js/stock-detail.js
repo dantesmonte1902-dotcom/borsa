@@ -222,7 +222,7 @@ function renderIndicators(payload) {
     document.getElementById('indicatorGrid').innerHTML = [
         infoTile('RSI 14', formatNumber(getLastNumericValue(indicators.rsi_14), 2)),
         infoTile('EMA 20', formatPrice(getLastNumericValue(indicators.ema_20))),
-        infoTile('SMA 50', formatPrice(getLastNumericValue(indicators.sma_50))),
+        infoTile('SMA 20', formatPrice(getLastNumericValue(indicators.sma_20))),
         infoTile('ATR 14', formatNumber(getLastNumericValue(indicators.atr_14), 3)),
         infoTile('MACD', formatNumber(getLastNumericValue(indicators.macd?.macd || indicators.macd), 3)),
         infoTile('1Y trend', formatSignedPercent(yearChange, 2)),
