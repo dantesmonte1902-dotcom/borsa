@@ -2,6 +2,7 @@ const state = {
     rawData: [],
     filteredData: [],
     selectedSymbol: null,
+    query: '',
 };
 
 const numberFormatter = new Intl.NumberFormat('tr-TR');
@@ -345,6 +346,7 @@ function renderTable(data) {
 
 function applyFilter() {
     const query = document.getElementById('searchInput').value.trim().toLocaleLowerCase('tr-TR');
+    state.query = query;
 
     state.filteredData = state.rawData.filter((item) => {
         if (!query) {
@@ -360,18 +362,20 @@ function applyFilter() {
         state.selectedSymbol = state.filteredData[0]?.snapshot?.symbol || state.rawData[0]?.snapshot?.symbol || null;
     }
 
-    renderLeaders(state.filteredData.length ? state.filteredData : state.rawData);
+    const displayData = state.query ? state.filteredData : state.rawData;
+    renderLeaders(displayData);
     renderTable(state.filteredData);
-    renderDetail((state.filteredData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || (state.rawData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || state.filteredData[0] || state.rawData[0] || null);
+    renderDetail((displayData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || displayData[0] || null);
 }
 
 function attachInteractions() {
     document.querySelectorAll('[data-symbol]').forEach((element) => {
         element.addEventListener('click', () => {
             state.selectedSymbol = element.dataset.symbol;
-            renderLeaders(state.filteredData.length ? state.filteredData : state.rawData);
+            const displayData = state.query ? state.filteredData : state.rawData;
+            renderLeaders(displayData);
             renderTable(state.filteredData);
-            renderDetail((state.filteredData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || (state.rawData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || null);
+            renderDetail((displayData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || null);
         });
     });
 }
@@ -402,17 +406,26 @@ async function loadMarket() {
     const payload = await response.json();
     const data = Array.isArray(payload.data) ? payload.data : [];
 
+    state.query = document.getElementById('searchInput').value.trim().toLocaleLowerCase('tr-TR');
     state.rawData = [...data].sort((left, right) => (right.scores?.overall || 0) - (left.scores?.overall || 0));
-    state.filteredData = [...state.rawData];
+    state.filteredData = state.rawData.filter((item) => {
+        if (!state.query) {
+            return true;
+        }
+
+        const symbol = String(item.snapshot?.symbol || '').toLocaleLowerCase('tr-TR');
+        const comments = (item.comments || []).join(' ').toLocaleLowerCase('tr-TR');
+        return symbol.includes(state.query) || comments.includes(state.query);
+    });
     state.selectedSymbol = state.selectedSymbol && state.rawData.some((item) => item.snapshot?.symbol === state.selectedSymbol)
         ? state.selectedSymbol
-        : state.rawData[0]?.snapshot?.symbol || null;
+        : state.filteredData[0]?.snapshot?.symbol || state.rawData[0]?.snapshot?.symbol || null;
 
     renderSummary(state.rawData);
-    renderLeaders(state.rawData);
+    renderLeaders(state.query ? state.filteredData : state.rawData);
     renderInsights(state.rawData);
     renderTable(state.filteredData);
-    renderDetail(state.rawData.find((item) => item.snapshot?.symbol === state.selectedSymbol) || state.rawData[0] || null);
+    renderDetail((state.query ? state.filteredData : state.rawData).find((item) => item.snapshot?.symbol === state.selectedSymbol) || (state.query ? state.filteredData[0] : state.rawData[0]) || null);
     updateTimestamp();
     attachInteractions();
 }
