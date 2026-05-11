@@ -163,7 +163,7 @@ final class AlertProcessor
             $minutes = (int) Config::get('alerts.defaults.cooldown_minutes', 15);
         }
 
-        return max(1, $minutes) * 60;
+        return $minutes * 60;
     }
 
     private function passesRateLimit(string $channel): bool
