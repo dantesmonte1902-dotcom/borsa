@@ -174,7 +174,6 @@ Cevap: PHP cURL, dosya izinleri, storage/logs klasörü ve .env ayarlarını kon
 - Gerçek OHLCV veri sağlayıcı adapterlarını tamamlamak
 - Alarm tekrar kontrolü, cooldown ve rate limit mantığını güçlendirmek
 - Gerçek kullanıcı giriş sistemi eklemek
-- Scanner sonuçlarını veritabanına kalıcı yazmak
 - Teknik göstergeler için test senaryoları eklemek
 - API rate limit ve audit log altyapısını güçlendirmek
 - Admin paneli ve ayar ekranı hazırlamak

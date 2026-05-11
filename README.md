@@ -60,6 +60,8 @@ php <project_root>/cron/alerts.php
 php <project_root>/cron/refresh_data.php
 ```
 
+`cron/scan.php` artık tarama çıktısını hem `storage/logs` altına JSON olarak yazar hem de veritabanı erişimi varsa `symbols` ve `scanner_results` tablolarına kalıcı kaydeder.
+
 ## Güvenlik notları
 
 - Gizli anahtarlar `.env` üzerinden yüklenir.
