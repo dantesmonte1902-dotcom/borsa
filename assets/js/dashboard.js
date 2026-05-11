@@ -330,11 +330,12 @@ function renderLeaders(data) {
     ].join('');
 }
 
-function infoTile(label, value) {
+function infoTile(label, value, caption = '') {
     return `
         <div class="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
             <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">${escapeHtml(label)}</p>
             <p class="text-lg font-semibold">${escapeHtml(value)}</p>
+            ${caption ? `<p class="mt-2 text-sm text-slate-400">${escapeHtml(caption)}</p>` : ''}
         </div>
     `;
 }
