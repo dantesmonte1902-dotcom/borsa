@@ -10,6 +10,7 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 - Tarama modülleri: low-float, 12 aylık dip analizi, hacim patlaması, formasyon sıkışması
 - Akıllı skor motoru ve rule-based yorum üretimi
 - Telegram, Discord, Email ve browser alarm kanalları
+- DB tabanlı aktif alarm okuma, tekrar bastırma, cooldown ve kanal bazlı rate limit akışı
 - API endpointleri, cron girişleri, public dashboard ve MySQL şeması
 
 ## Klasör yapısı
@@ -61,6 +62,8 @@ php <project_root>/cron/refresh_data.php
 ```
 
 `cron/scan.php` artık tarama çıktısını hem `storage/logs` altına JSON olarak yazar hem de veritabanı erişimi varsa `symbols` ve `scanner_results` tablolarına kalıcı kaydeder.
+
+`cron/alerts.php` artık veritabanındaki aktif `alerts` kayıtlarını işler, alarm durumunu `storage/cache/alerts-state.json` içinde tutar, tekrar eden aktif sinyalleri bastırır ve kanal bazlı rate limit/cooldown kurallarını uygular. Veritabanı erişimi varsa `notification_logs` ve `cron_logs` tablolarına audit kaydı da bırakır.
 
 ## Güvenlik notları
 
