@@ -7,6 +7,8 @@ use RuntimeException;
 
 final class HttpClient
 {
+    private const MICROSECONDS_PER_SECOND = 1000000;
+
     private string $rateLimitFile;
 
     public function __construct(private readonly ?FileCache $cache = null)
@@ -119,7 +121,7 @@ final class HttpClient
 
         if (count($records) >= $perMinute) {
             $targetTime = ((float) $records[0]) + 60.0;
-            $sleepMicroseconds = max(0, (int) round(($targetTime - $now) * 1_000_000));
+            $sleepMicroseconds = max(0, (int) round(($targetTime - $now) * self::MICROSECONDS_PER_SECOND));
             if ($sleepMicroseconds > 0) {
                 usleep($sleepMicroseconds);
             }

@@ -32,7 +32,7 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 1. `<project_root>/.env.example` dosyasını `.env` olarak kopyalayın.
 2. Telegram/Discord/email ve veritabanı ayarlarını doldurun.
 3. `storage/schema.sql` içeriğini MySQL/MariaDB üzerinde çalıştırın.
-4. Web kökünü mümkünse `<project_root>/public` dizinine yönlendirin.
+4. Web kökünü mümkünse `public/` dizinine yönlendirin.
 
 ## API
 

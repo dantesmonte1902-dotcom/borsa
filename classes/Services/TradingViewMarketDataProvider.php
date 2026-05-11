@@ -5,6 +5,10 @@ namespace App\Services;
 final class TradingViewMarketDataProvider implements MarketDataProviderInterface
 {
     private const DEFAULT_TRADING_DAYS = 252;
+    private const FALLBACK_DRIFT_DIVISOR = 18;
+    private const FALLBACK_DRIFT_FACTOR = 0.035;
+    private const FALLBACK_NOISE_DIVISOR = 7;
+    private const FALLBACK_NOISE_FACTOR = 0.012;
 
     public function __construct(private readonly HttpClient $httpClient)
     {
@@ -79,8 +83,8 @@ final class TradingViewMarketDataProvider implements MarketDataProviderInterface
         $candles = [];
 
         for ($i = self::DEFAULT_TRADING_DAYS - 1; $i >= 0; $i--) {
-            $drift = sin(($i / 18)) * 0.035;
-            $noise = cos(($i / 7)) * 0.012;
+            $drift = sin(($i / self::FALLBACK_DRIFT_DIVISOR)) * self::FALLBACK_DRIFT_FACTOR;
+            $noise = cos(($i / self::FALLBACK_NOISE_DIVISOR)) * self::FALLBACK_NOISE_FACTOR;
             $close = max(0.1, $basePrice * (1 + $drift + $noise));
             $open = $close * (1 - 0.005);
             $high = $close * 1.015;

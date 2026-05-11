@@ -17,7 +17,8 @@ final class DipScanner
         $ema20 = (float) ($indicators['ema_20'][array_key_last($indicators['ema_20'])] ?? 0);
         $ema50 = (float) ($indicators['ema_50'][array_key_last($indicators['ema_50'])] ?? 0);
         $bbWidth = (float) ($indicators['bollinger']['width'][array_key_last($indicators['bollinger']['width'])] ?? 0);
-        $avgVolume = array_sum(array_slice($volumes, -20)) / max(count(array_slice($volumes, -20)), 1);
+        $recentVolumes = array_slice($volumes, -20);
+        $avgVolume = array_sum($recentVolumes) / max(count($recentVolumes), 1);
         $volumeExpansion = $avgVolume > 0 ? (($snapshot['volume'] ?? 0) / $avgVolume) * 100 : 0;
 
         $recoveryProbability = min(100.0, max(0.0, 40 - $distance) + max(0.0, $rsi - 35) + ($macd > $signal ? 20 : 0));
