@@ -3,13 +3,51 @@ const state = {
     filteredData: [],
     selectedSymbol: null,
     query: '',
+    activeFilter: 'all',
 };
 
 const MARKET_LIMIT = 12;
+const CHART_WINDOW = 24;
 
 const numberFormatter = new Intl.NumberFormat('tr-TR');
 const compactFormatter = new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 });
 const currencyFormatter = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const quickFilters = [
+    {
+        id: 'all',
+        label: 'Tümü',
+        accentClass: 'from-slate-400/30 to-slate-500/10 text-slate-100 border-white/10',
+        predicate: () => true,
+    },
+    {
+        id: 'strong',
+        label: 'Güçlü Skor',
+        accentClass: 'from-emerald-400/30 to-emerald-500/10 text-emerald-100 border-emerald-400/20',
+        predicate: (item) => (item.scores?.overall || 0) >= 70,
+    },
+    {
+        id: 'volume',
+        label: 'Hacim Patlaması',
+        accentClass: 'from-cyan-400/30 to-cyan-500/10 text-cyan-100 border-cyan-400/20',
+        predicate: (item) => (item.scanners?.volume_burst?.metrics?.volume_ratio || 0) >= 1.5,
+    },
+    {
+        id: 'dip',
+        label: 'Dip Yakını',
+        accentClass: 'from-amber-400/30 to-amber-500/10 text-amber-100 border-amber-400/20',
+        predicate: (item) => (item.scanners?.dip_recovery?.metrics?.distance_to_year_low_pct || 999) <= 12,
+    },
+    {
+        id: 'oversold',
+        label: 'RSI Düşük',
+        accentClass: 'from-fuchsia-400/30 to-fuchsia-500/10 text-fuchsia-100 border-fuchsia-400/20',
+        predicate: (item) => {
+            const rsi = getLastNumericValue(item.indicators?.rsi_14);
+            return typeof rsi === 'number' && rsi < 35;
+        },
+    },
+];
 
 function getLastNumericValue(series) {
     if (!Array.isArray(series)) {
@@ -51,6 +89,15 @@ function formatPercent(value, digits = 2) {
     }
 
     return `${formatNumber(value, digits)}%`;
+}
+
+function formatSignedPercent(value, digits = 2) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return '-';
+    }
+
+    const sign = value > 0 ? '+' : '';
+    return `${sign}${formatNumber(value, digits)}%`;
 }
 
 function formatScore(value) {
@@ -106,6 +153,29 @@ function pulseMeta(avgScore) {
     return { value: 'Temkinli Bölge', text: 'Sinyaller zayıf; hacim ve dip dönüşü metriklerine odaklanın.' };
 }
 
+function getFilterDefinition(filterId) {
+    return quickFilters.find((filter) => filter.id === filterId) || quickFilters[0];
+}
+
+function matchesQuery(item, query) {
+    if (!query) {
+        return true;
+    }
+
+    const normalizedQuery = query.toLocaleLowerCase('tr-TR');
+    const symbol = String(item.snapshot?.symbol || '').toLocaleLowerCase('tr-TR');
+    const name = String(item.snapshot?.name || '').toLocaleLowerCase('tr-TR');
+    const comments = (item.comments || []).join(' ').toLocaleLowerCase('tr-TR');
+
+    return symbol.includes(normalizedQuery) || name.includes(normalizedQuery) || comments.includes(normalizedQuery);
+}
+
+function applyActiveFilters(data) {
+    const predicate = getFilterDefinition(state.activeFilter).predicate;
+
+    return data.filter((item) => matchesQuery(item, state.query) && predicate(item));
+}
+
 function deriveLeaders(data) {
     const volumeLeader = [...data].sort((left, right) => ((right.scanners?.volume_burst?.metrics?.volume_ratio || 0) - (left.scanners?.volume_burst?.metrics?.volume_ratio || 0)))[0] || null;
     const dipLeader = [...data].sort((left, right) => ((left.scanners?.dip_recovery?.metrics?.distance_to_year_low_pct || Infinity) - (right.scanners?.dip_recovery?.metrics?.distance_to_year_low_pct || Infinity)))[0] || null;
@@ -145,6 +215,28 @@ function renderSummary(data) {
     const pulse = pulseMeta(avgOverall);
     document.getElementById('marketPulseValue').textContent = pulse.value;
     document.getElementById('marketPulseText').textContent = pulse.text;
+}
+
+function renderQuickFilters(data) {
+    document.getElementById('quickFilters').innerHTML = quickFilters.map((filter) => {
+        const isActive = state.activeFilter === filter.id;
+        const count = data.filter(filter.predicate).length;
+        const activeClass = isActive
+            ? 'ring-2 ring-white/20 shadow-lg shadow-black/20 -translate-y-0.5'
+            : 'opacity-85 hover:opacity-100';
+
+        return `
+            <button
+                type="button"
+                data-filter="${escapeHtml(filter.id)}"
+                class="shrink-0 rounded-2xl border bg-gradient-to-br px-4 py-3 text-left transition ${filter.accentClass} ${activeClass}"
+            >
+                <span class="block text-xs uppercase tracking-[0.2em] text-white/70">Hızlı filtre</span>
+                <span class="mt-1 block text-sm font-semibold">${escapeHtml(filter.label)}</span>
+                <span class="mt-2 block text-xs text-white/70">${numberFormatter.format(count)} sembol</span>
+            </button>
+        `;
+    }).join('');
 }
 
 function leaderCard(title, label, item, metric, accentClass) {
@@ -196,6 +288,96 @@ function infoTile(label, value) {
     `;
 }
 
+function buildMiniChart(candles) {
+    const points = Array.isArray(candles)
+        ? candles.slice(-CHART_WINDOW).map((candle) => Number(candle?.close)).filter((value) => Number.isFinite(value))
+        : [];
+
+    if (points.length < 2) {
+        return null;
+    }
+
+    const width = 320;
+    const height = 120;
+    const padding = 10;
+    const min = Math.min(...points);
+    const max = Math.max(...points);
+    const range = max - min || 1;
+    const xStep = (width - (padding * 2)) / Math.max(points.length - 1, 1);
+
+    const coordinates = points.map((value, index) => {
+        const x = padding + (index * xStep);
+        const y = height - padding - (((value - min) / range) * (height - (padding * 2)));
+
+        return [Number(x.toFixed(2)), Number(y.toFixed(2))];
+    });
+
+    const linePath = coordinates.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+    const areaPath = `${linePath} L ${coordinates[coordinates.length - 1][0]} ${height - padding} L ${coordinates[0][0]} ${height - padding} Z`;
+    const first = points[0];
+    const last = points[points.length - 1];
+    const change = first ? ((last - first) / first) * 100 : 0;
+
+    return {
+        areaPath,
+        linePath,
+        high: max,
+        low: min,
+        last,
+        change,
+        tone: change >= 0 ? 'emerald' : 'rose',
+    };
+}
+
+function renderMiniChart(item) {
+    const chart = buildMiniChart(item.candles || []);
+
+    if (!chart) {
+        return `
+            <div class="rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-sm text-slate-400">
+                Mini grafik için yeterli candle verisi yok.
+            </div>
+        `;
+    }
+
+    const isPositive = chart.tone === 'emerald';
+    const strokeColor = isPositive ? '#34d399' : '#fb7185';
+    const gradientColor = isPositive ? '52, 211, 153' : '251, 113, 133';
+    const changeClass = isPositive ? 'text-emerald-300' : 'text-rose-300';
+
+    return `
+        <div class="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm uppercase tracking-[0.2em] text-slate-500">Mini grafik</p>
+                    <h3 class="mt-2 text-lg font-semibold">Son ${CHART_WINDOW} gün görünümü</h3>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm ${changeClass}">${formatSignedPercent(chart.change, 2)}</p>
+                    <p class="mt-1 text-xs text-slate-500">Son kapanış ${formatPrice(chart.last)}</p>
+                </div>
+            </div>
+            <div class="mt-4 overflow-hidden rounded-[24px] border border-white/5 bg-gradient-to-br from-white/5 to-white/[0.02] p-3">
+                <svg viewBox="0 0 320 120" class="h-32 w-full" role="img" aria-label="Fiyat mini grafiği">
+                    <defs>
+                        <linearGradient id="mini-chart-fill" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="rgba(${gradientColor},0.38)"></stop>
+                            <stop offset="100%" stop-color="rgba(${gradientColor},0.02)"></stop>
+                        </linearGradient>
+                    </defs>
+                    <path d="${chart.areaPath}" fill="url(#mini-chart-fill)"></path>
+                    <path d="${chart.linePath}" fill="none" stroke="${strokeColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                    ${infoTile('Trend', formatSignedPercent(chart.change, 2))}
+                    ${infoTile('Periyot Zirvesi', formatPrice(chart.high))}
+                    ${infoTile('Periyot Dibi', formatPrice(chart.low))}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function renderDetail(item) {
     const detailPanel = document.getElementById('detailPanel');
 
@@ -224,6 +406,8 @@ function renderDetail(item) {
                     <p class="text-3xl font-bold mt-1">${formatScore(item.scores?.overall || 0)}</p>
                 </div>
             </div>
+
+            ${renderMiniChart(item)}
 
             <div class="grid gap-3 sm:grid-cols-2">
                 ${infoTile('Son Fiyat', formatPrice(item.snapshot?.close || null))}
@@ -330,8 +514,36 @@ function tableRow(item) {
     `;
 }
 
+function mobileRow(item) {
+    const summary = (item.comments || []).slice(0, 1).join(' ') || 'Yorum bulunamadı';
+    const isActive = state.selectedSymbol === item.snapshot?.symbol;
+
+    return `
+        <button
+            type="button"
+            data-symbol="${escapeHtml(item.snapshot?.symbol || '')}"
+            class="rounded-3xl border p-4 text-left transition ${isActive ? 'border-emerald-400/40 bg-emerald-400/10' : 'border-white/10 bg-slate-950/50 hover:bg-white/5'}"
+        >
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-lg font-bold">${escapeHtml(item.snapshot?.symbol || '-')}</p>
+                    <p class="mt-1 text-xs text-slate-500">${escapeHtml(item.snapshot?.name || '-')}</p>
+                </div>
+                <span class="rounded-full border px-3 py-1 text-xs font-medium ${scoreTone(item.scores?.overall || 0)}">${formatScore(item.scores?.overall || 0)}</span>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+                ${infoTile('Fiyat', formatPrice(item.snapshot?.close || null))}
+                ${infoTile('Hacim', formatCompact(item.snapshot?.volume || null))}
+            </div>
+            <p class="mt-4 text-sm leading-6 text-slate-300">${escapeHtml(summary)}</p>
+        </button>
+    `;
+}
+
 function renderTable(data) {
     const table = document.getElementById('scannerTable');
+    const mobileList = document.getElementById('mobileScannerList');
+
     document.getElementById('resultCount').textContent = `${numberFormatter.format(data.length)} sonuç`;
 
     if (!data.length) {
@@ -340,53 +552,46 @@ function renderTable(data) {
                 <td colspan="7" class="px-4 py-10 text-center text-slate-400">Aramanıza uygun hisse bulunamadı.</td>
             </tr>
         `;
+        mobileList.innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400">Mobil görünüm için eşleşen hisse bulunamadı.</div>';
         return;
     }
 
     table.innerHTML = data.map(tableRow).join('');
+    mobileList.innerHTML = data.map(mobileRow).join('');
+}
+
+function syncSelection() {
+    if (state.filteredData.some((item) => item.snapshot?.symbol === state.selectedSymbol)) {
+        return;
+    }
+
+    state.selectedSymbol = state.filteredData[0]?.snapshot?.symbol || state.rawData[0]?.snapshot?.symbol || null;
+}
+
+function renderActiveViews() {
+    syncSelection();
+    renderQuickFilters(state.rawData);
+    renderLeaders(state.filteredData);
+    renderTable(state.filteredData);
+
+    const activeItem = state.filteredData.find((item) => item.snapshot?.symbol === state.selectedSymbol) || state.filteredData[0] || null;
+    state.selectedSymbol = activeItem?.snapshot?.symbol || null;
+    renderDetail(activeItem);
 }
 
 function applyFilter() {
-    const query = document.getElementById('searchInput').value.trim().toLocaleLowerCase('tr-TR');
-    state.query = query;
-
-    state.filteredData = state.rawData.filter((item) => {
-        if (!query) {
-            return true;
-        }
-
-        const symbol = String(item.snapshot?.symbol || '').toLocaleLowerCase('tr-TR');
-        const comments = (item.comments || []).join(' ').toLocaleLowerCase('tr-TR');
-        return symbol.includes(query) || comments.includes(query);
-    });
-
-    if (!state.filteredData.some((item) => item.snapshot?.symbol === state.selectedSymbol)) {
-        state.selectedSymbol = state.filteredData[0]?.snapshot?.symbol || state.rawData[0]?.snapshot?.symbol || null;
-    }
-
-    const displayData = state.query ? state.filteredData : state.rawData;
-    renderLeaders(displayData);
-    renderTable(state.filteredData);
-    renderDetail((displayData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || displayData[0] || null);
-}
-
-function attachInteractions() {
-    document.querySelectorAll('[data-symbol]').forEach((element) => {
-        element.addEventListener('click', () => {
-            state.selectedSymbol = element.dataset.symbol;
-            const displayData = state.query ? state.filteredData : state.rawData;
-            renderLeaders(displayData);
-            renderTable(state.filteredData);
-            renderDetail((displayData.find((item) => item.snapshot?.symbol === state.selectedSymbol)) || null);
-        });
-    });
+    state.query = document.getElementById('searchInput').value.trim();
+    state.filteredData = applyActiveFilters(state.rawData);
+    renderActiveViews();
 }
 
 function setLoadingState() {
     document.getElementById('summaryCards').innerHTML = '<div class="md:col-span-2 xl:col-span-4 rounded-[28px] border border-white/10 bg-white/5 p-6 text-slate-400">Veriler yükleniyor...</div>';
+    document.getElementById('quickFilters').innerHTML = '<div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">Filtreler hazırlanıyor...</div>';
     document.getElementById('leaderboard').innerHTML = '<div class="md:col-span-2 rounded-3xl border border-white/10 bg-slate-950/50 p-6 text-slate-400">Fırsat kartları hazırlanıyor...</div>';
     document.getElementById('detailPanel').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-6 text-slate-400">Detay paneli hazırlanıyor...</div>';
     document.getElementById('insightGrid').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-6 text-slate-400">İçgörüler hesaplanıyor...</div>';
+    document.getElementById('mobileScannerList').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400 lg:hidden">Mobil kartlar hazırlanıyor...</div>';
     document.getElementById('scannerTable').innerHTML = '<tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">Tablo yükleniyor...</td></tr>';
 }
 
@@ -408,39 +613,43 @@ async function loadMarket() {
     const payload = await response.json();
     const data = Array.isArray(payload.data) ? payload.data : [];
 
-    state.query = document.getElementById('searchInput').value.trim().toLocaleLowerCase('tr-TR');
     state.rawData = [...data].sort((left, right) => (right.scores?.overall || 0) - (left.scores?.overall || 0));
-    state.filteredData = state.rawData.filter((item) => {
-        if (!state.query) {
-            return true;
-        }
-
-        const symbol = String(item.snapshot?.symbol || '').toLocaleLowerCase('tr-TR');
-        const comments = (item.comments || []).join(' ').toLocaleLowerCase('tr-TR');
-        return symbol.includes(state.query) || comments.includes(state.query);
-    });
-    state.selectedSymbol = state.selectedSymbol && state.rawData.some((item) => item.snapshot?.symbol === state.selectedSymbol)
-        ? state.selectedSymbol
-        : state.filteredData[0]?.snapshot?.symbol || state.rawData[0]?.snapshot?.symbol || null;
+    state.filteredData = applyActiveFilters(state.rawData);
+    syncSelection();
 
     renderSummary(state.rawData);
-    renderLeaders(state.query ? state.filteredData : state.rawData);
     renderInsights(state.rawData);
-    renderTable(state.filteredData);
-    renderDetail((state.query ? state.filteredData : state.rawData).find((item) => item.snapshot?.symbol === state.selectedSymbol) || (state.query ? state.filteredData[0] : state.rawData[0]) || null);
+    renderActiveViews();
     updateTimestamp();
-    attachInteractions();
 }
 
 function showError(error) {
     const message = error instanceof Error ? error.message : 'Bilinmeyen hata';
     document.getElementById('summaryCards').innerHTML = `<div class="md:col-span-2 xl:col-span-4 rounded-[28px] border border-rose-400/20 bg-rose-400/10 p-6 text-rose-200">Veriler alınamadı: ${escapeHtml(message)}</div>`;
+    document.getElementById('quickFilters').innerHTML = '<div class="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">Filtreler veri bekliyor.</div>';
     document.getElementById('leaderboard').innerHTML = '<div class="md:col-span-2 rounded-3xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100">API bağlantısını ve ortam ayarlarınızı kontrol edin.</div>';
     document.getElementById('detailPanel').innerHTML = '<div class="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100">Detay paneli veri bekliyor.</div>';
     document.getElementById('insightGrid').innerHTML = '<div class="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100">İçgörüler hesaplanamadı.</div>';
+    document.getElementById('mobileScannerList').innerHTML = '<div class="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-100 lg:hidden">Mobil kartlar yüklenemedi.</div>';
     document.getElementById('scannerTable').innerHTML = `<tr><td colspan="7" class="px-4 py-10 text-center text-rose-200">${escapeHtml(message)}</td></tr>`;
     document.getElementById('resultCount').textContent = '0 sonuç';
 }
+
+document.addEventListener('click', (event) => {
+    const filterButton = event.target.closest('[data-filter]');
+    if (filterButton) {
+        state.activeFilter = filterButton.dataset.filter || 'all';
+        state.filteredData = applyActiveFilters(state.rawData);
+        renderActiveViews();
+        return;
+    }
+
+    const symbolButton = event.target.closest('[data-symbol]');
+    if (symbolButton) {
+        state.selectedSymbol = symbolButton.dataset.symbol || null;
+        renderActiveViews();
+    }
+});
 
 document.getElementById('reloadButton').addEventListener('click', () => {
     loadMarket().catch(showError);
@@ -448,7 +657,6 @@ document.getElementById('reloadButton').addEventListener('click', () => {
 
 document.getElementById('searchInput').addEventListener('input', () => {
     applyFilter();
-    attachInteractions();
 });
 
 loadMarket().catch(showError);

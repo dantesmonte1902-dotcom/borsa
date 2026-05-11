@@ -91,6 +91,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
                     <input id="searchInput" type="search" placeholder="Sembol veya yorum ara..." class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none ring-0 placeholder:text-slate-500 focus:border-emerald-400/60">
                 </label>
             </div>
+            <div id="quickFilters" class="mb-6 flex gap-3 overflow-x-auto pb-1"></div>
             <div id="leaderboard" class="grid gap-4 md:grid-cols-2"></div>
         </div>
 
@@ -106,8 +107,9 @@ require_once dirname(__DIR__) . '/bootstrap.php';
                 </div>
                 <span id="resultCount" class="text-sm text-slate-400"></span>
             </div>
+            <div id="mobileScannerList" class="grid gap-3 lg:hidden"></div>
             <div class="overflow-hidden rounded-3xl border border-white/10">
-                <div class="overflow-x-auto">
+                <div class="hidden overflow-x-auto lg:block">
                     <table class="min-w-full text-sm">
                         <thead class="bg-slate-950/80 text-left text-slate-400">
                         <tr>
