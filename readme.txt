@@ -172,7 +172,6 @@ Cevap: PHP cURL, dosya izinleri, storage/logs klasörü ve .env ayarlarını kon
 ------------------------------------------
 Öncelikli geliştirme önerileri:
 - Gerçek OHLCV veri sağlayıcı adapterlarını tamamlamak
-- Watchlist ve portfolio için kullanıcı paneli eklemek
 - Alarm tekrar kontrolü, cooldown ve rate limit mantığını güçlendirmek
 - Gerçek kullanıcı giriş sistemi eklemek
 - Scanner sonuçlarını veritabanına kalıcı yazmak

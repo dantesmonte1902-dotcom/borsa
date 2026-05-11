@@ -4,10 +4,15 @@ const state = {
     selectedSymbol: null,
     query: '',
     activeFilter: 'all',
+    userPanel: {
+        watchlist: [],
+        portfolio: [],
+    },
 };
 
 const MARKET_LIMIT = 12;
 const CHART_WINDOW = 24;
+const USER_PANEL_STORAGE_KEY = 'borsa-user-panel-v1';
 
 const numberFormatter = new Intl.NumberFormat('tr-TR');
 const compactFormatter = new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 });
@@ -15,6 +20,48 @@ const currencyFormatter = new Intl.NumberFormat('tr-TR', { minimumFractionDigits
 
 function buildStockDetailUrl(symbol) {
     return `./stock.php?symbol=${encodeURIComponent(symbol || '')}`;
+}
+
+function normalizeSymbol(symbol) {
+    return String(symbol || '').trim().toUpperCase();
+}
+
+function loadUserPanelState() {
+    try {
+        const raw = window.localStorage.getItem(USER_PANEL_STORAGE_KEY);
+        if (!raw) {
+            return;
+        }
+
+        const parsed = JSON.parse(raw);
+        const watchlist = Array.isArray(parsed?.watchlist)
+            ? parsed.watchlist.map(normalizeSymbol).filter(Boolean)
+            : [];
+        const portfolio = Array.isArray(parsed?.portfolio)
+            ? parsed.portfolio
+                .map((position) => ({
+                    symbol: normalizeSymbol(position?.symbol),
+                    quantity: Number(position?.quantity),
+                    averageCost: Number(position?.averageCost),
+                }))
+                .filter((position) => position.symbol && Number.isFinite(position.quantity) && position.quantity > 0 && Number.isFinite(position.averageCost) && position.averageCost >= 0)
+            : [];
+
+        state.userPanel = {
+            watchlist: [...new Set(watchlist)],
+            portfolio,
+        };
+    } catch (error) {
+        state.userPanel = { watchlist: [], portfolio: [] };
+    }
+}
+
+function saveUserPanelState() {
+    try {
+        window.localStorage.setItem(USER_PANEL_STORAGE_KEY, JSON.stringify(state.userPanel));
+    } catch (error) {
+        return;
+    }
 }
 
 const quickFilters = [
@@ -292,6 +339,176 @@ function infoTile(label, value) {
     `;
 }
 
+function getItemBySymbol(symbol) {
+    const normalizedSymbol = normalizeSymbol(symbol);
+    return state.rawData.find((item) => normalizeSymbol(item.snapshot?.symbol) === normalizedSymbol) || null;
+}
+
+function watchlistHasSymbol(symbol) {
+    const normalizedSymbol = normalizeSymbol(symbol);
+    return state.userPanel.watchlist.includes(normalizedSymbol);
+}
+
+function getPortfolioPosition(symbol) {
+    const normalizedSymbol = normalizeSymbol(symbol);
+    return state.userPanel.portfolio.find((position) => position.symbol === normalizedSymbol) || null;
+}
+
+function toggleWatchlistSymbol(symbol) {
+    const normalizedSymbol = normalizeSymbol(symbol);
+    if (!normalizedSymbol) {
+        return;
+    }
+
+    if (watchlistHasSymbol(normalizedSymbol)) {
+        state.userPanel.watchlist = state.userPanel.watchlist.filter((item) => item !== normalizedSymbol);
+    } else {
+        state.userPanel.watchlist = [...state.userPanel.watchlist, normalizedSymbol];
+    }
+
+    saveUserPanelState();
+}
+
+function removePortfolioPosition(symbol) {
+    const normalizedSymbol = normalizeSymbol(symbol);
+    state.userPanel.portfolio = state.userPanel.portfolio.filter((position) => position.symbol !== normalizedSymbol);
+    saveUserPanelState();
+}
+
+function upsertPortfolioPosition(symbol, quantity, averageCost) {
+    const normalizedSymbol = normalizeSymbol(symbol);
+    const normalizedQuantity = Number(quantity);
+    const normalizedAverageCost = Number(averageCost);
+
+    if (!normalizedSymbol || !Number.isFinite(normalizedQuantity) || normalizedQuantity <= 0 || !Number.isFinite(normalizedAverageCost) || normalizedAverageCost < 0) {
+        return false;
+    }
+
+    const nextPosition = {
+        symbol: normalizedSymbol,
+        quantity: normalizedQuantity,
+        averageCost: normalizedAverageCost,
+    };
+
+    const existingIndex = state.userPanel.portfolio.findIndex((position) => position.symbol === normalizedSymbol);
+    if (existingIndex >= 0) {
+        state.userPanel.portfolio.splice(existingIndex, 1, nextPosition);
+    } else {
+        state.userPanel.portfolio.push(nextPosition);
+    }
+
+    saveUserPanelState();
+    return true;
+}
+
+function syncPortfolioForm() {
+    const symbol = normalizeSymbol(state.selectedSymbol);
+    const quantityInput = document.getElementById('portfolioQuantityInput');
+    const averageCostInput = document.getElementById('portfolioAverageCostInput');
+    const badge = document.getElementById('portfolioSymbolBadge');
+
+    badge.textContent = symbol || '-';
+    if (!symbol) {
+        quantityInput.value = '';
+        averageCostInput.value = '';
+        return;
+    }
+
+    const position = getPortfolioPosition(symbol);
+    quantityInput.value = position ? String(position.quantity) : '';
+    averageCostInput.value = position ? String(position.averageCost) : '';
+}
+
+function watchlistRow(symbol) {
+    const item = getItemBySymbol(symbol);
+    const isActive = normalizeSymbol(state.selectedSymbol) === symbol;
+    const comments = item ? ((item.comments || []).slice(0, 1).join(' ') || 'Yorum bekleniyor') : 'Canlı veri gelince skor ve yorum burada görünür.';
+
+    return `
+        <div class="rounded-3xl border p-4 transition ${isActive ? 'border-emerald-400/40 bg-emerald-400/10' : 'border-white/10 bg-slate-950/50'}">
+            <div class="flex items-start justify-between gap-3">
+                <button type="button" data-symbol="${escapeHtml(symbol)}" class="text-left">
+                    <p class="text-lg font-bold">${escapeHtml(symbol)}</p>
+                    <p class="mt-1 text-xs text-slate-500">${escapeHtml(item?.snapshot?.name || 'İzleme listesi sembolü')}</p>
+                </button>
+                <button type="button" data-action="toggle-watchlist" data-symbol="${escapeHtml(symbol)}" class="rounded-2xl border border-white/10 px-3 py-2 text-xs text-slate-300 transition hover:border-rose-400/30 hover:text-rose-200">
+                    Kaldır
+                </button>
+            </div>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                ${infoTile('Fiyat', formatPrice(item?.snapshot?.close || null))}
+                ${infoTile('Skor', formatScore(item?.scores?.overall || null))}
+            </div>
+            <p class="mt-4 text-sm leading-6 text-slate-300">${escapeHtml(comments)}</p>
+        </div>
+    `;
+}
+
+function portfolioRow(position) {
+    const item = getItemBySymbol(position.symbol);
+    const currentPrice = Number(item?.snapshot?.close);
+    const marketValue = Number.isFinite(currentPrice) ? currentPrice * position.quantity : null;
+    const costValue = position.averageCost * position.quantity;
+    const pnlValue = marketValue !== null ? marketValue - costValue : null;
+    const pnlPercent = costValue > 0 && pnlValue !== null ? (pnlValue / costValue) * 100 : null;
+    const pnlClass = pnlValue !== null && pnlValue >= 0 ? 'text-emerald-300' : 'text-rose-300';
+
+    return `
+        <div class="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
+            <div class="flex items-start justify-between gap-3">
+                <button type="button" data-symbol="${escapeHtml(position.symbol)}" class="text-left">
+                    <p class="text-lg font-bold">${escapeHtml(position.symbol)}</p>
+                    <p class="mt-1 text-xs text-slate-500">${escapeHtml(item?.snapshot?.name || 'Portföy pozisyonu')}</p>
+                </button>
+                <button type="button" data-action="remove-portfolio" data-symbol="${escapeHtml(position.symbol)}" class="rounded-2xl border border-white/10 px-3 py-2 text-xs text-slate-300 transition hover:border-rose-400/30 hover:text-rose-200">
+                    Sil
+                </button>
+            </div>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                ${infoTile('Lot', formatNumber(position.quantity, 4))}
+                ${infoTile('Maliyet', formatPrice(position.averageCost))}
+                ${infoTile('Güncel değer', marketValue !== null ? formatPrice(marketValue) : '-')}
+                ${infoTile('P/L', pnlValue !== null ? formatPrice(pnlValue) : '-', pnlPercent !== null ? formatSignedPercent(pnlPercent, 2) : 'Canlı fiyat bekleniyor')}
+            </div>
+            <p class="mt-4 text-sm ${pnlClass}">${escapeHtml(pnlPercent !== null ? `Toplam getiri ${formatSignedPercent(pnlPercent, 2)}` : 'Canlı fiyat geldiğinde getiri hesaplanacak.')}</p>
+        </div>
+    `;
+}
+
+function renderUserPanel() {
+    const watchlistPanel = document.getElementById('watchlistPanel');
+    const portfolioPanel = document.getElementById('portfolioPanel');
+    const watchlistCountBadge = document.getElementById('watchlistCountBadge');
+    const portfolioCountBadge = document.getElementById('portfolioCountBadge');
+
+    watchlistCountBadge.textContent = `${numberFormatter.format(state.userPanel.watchlist.length)} sembol`;
+    portfolioCountBadge.textContent = `${numberFormatter.format(state.userPanel.portfolio.length)} pozisyon`;
+
+    if (!state.userPanel.watchlist.length) {
+        watchlistPanel.innerHTML = `
+            <div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400">
+                Seçili hisse kartındaki “Watchlist” aksiyonu ile sembolleri kişisel izleme listene ekleyebilirsin.
+            </div>
+        `;
+    } else {
+        watchlistPanel.innerHTML = state.userPanel.watchlist.map(watchlistRow).join('');
+    }
+
+    if (!state.userPanel.portfolio.length) {
+        portfolioPanel.innerHTML = `
+            <div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400">
+                Seçili sembol için lot ve maliyet girerek portföyünü burada takip edebilirsin.
+            </div>
+        `;
+    } else {
+        portfolioPanel.innerHTML = state.userPanel.portfolio
+            .slice()
+            .sort((left, right) => left.symbol.localeCompare(right.symbol, 'tr'))
+            .map(portfolioRow)
+            .join('');
+    }
+}
+
 function buildMiniChart(candles) {
     const points = Array.isArray(candles)
         ? candles.slice(-CHART_WINDOW).map((candle) => Number(candle?.close)).filter((value) => Number.isFinite(value))
@@ -395,6 +612,7 @@ function renderDetail(item) {
     const sma20 = getLastNumericValue(item.indicators?.sma_20);
     const atr = getLastNumericValue(item.indicators?.atr_14);
     const macdValue = getLastNumericValue(item.indicators?.macd?.macd || item.indicators?.macd);
+    const inWatchlist = watchlistHasSymbol(item.snapshot?.symbol);
     const latestComment = (item.comments || []).join(' ') || 'Henüz yorum üretilmedi.';
 
     detailPanel.innerHTML = `
@@ -424,6 +642,12 @@ function renderDetail(item) {
                 <a href="${escapeHtml(buildStockDetailUrl(item.snapshot?.symbol || ''))}" class="inline-flex items-center justify-center rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
                     Tam analiz sayfasını aç
                 </a>
+                <button type="button" data-action="toggle-watchlist" data-symbol="${escapeHtml(item.snapshot?.symbol || '')}" class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-400/30 hover:text-white">
+                    ${inWatchlist ? 'Watchlist’ten çıkar' : 'Watchlist’e ekle'}
+                </button>
+                <button type="button" data-action="focus-portfolio" data-symbol="${escapeHtml(item.snapshot?.symbol || '')}" class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/30 hover:text-white">
+                    Portfolio formuna taşı
+                </button>
                 <span class="inline-flex items-center rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
                     Candle chart ve detaylı teknik görünüm ayrı sayfada hazır.
                 </span>
@@ -590,6 +814,8 @@ function renderActiveViews() {
     const activeItem = state.filteredData.find((item) => item.snapshot?.symbol === state.selectedSymbol) || state.filteredData[0] || null;
     state.selectedSymbol = activeItem?.snapshot?.symbol || null;
     renderDetail(activeItem);
+    syncPortfolioForm();
+    renderUserPanel();
 }
 
 function applyFilter() {
@@ -606,6 +832,8 @@ function setLoadingState() {
     document.getElementById('insightGrid').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-6 text-slate-400">İçgörüler hesaplanıyor...</div>';
     document.getElementById('mobileScannerList').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400 lg:hidden">Mobil kartlar hazırlanıyor...</div>';
     document.getElementById('scannerTable').innerHTML = '<tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">Tablo yükleniyor...</td></tr>';
+    document.getElementById('watchlistPanel').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400">Watchlist hazırlanıyor...</div>';
+    document.getElementById('portfolioPanel').innerHTML = '<div class="rounded-3xl border border-white/10 bg-slate-950/50 p-5 text-sm text-slate-400">Portfolio hazırlanıyor...</div>';
 }
 
 function updateTimestamp() {
@@ -646,6 +874,8 @@ function showError(error) {
     document.getElementById('mobileScannerList').innerHTML = '<div class="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-100 lg:hidden">Mobil kartlar yüklenemedi.</div>';
     document.getElementById('scannerTable').innerHTML = `<tr><td colspan="7" class="px-4 py-10 text-center text-rose-200">${escapeHtml(message)}</td></tr>`;
     document.getElementById('resultCount').textContent = '0 sonuç';
+    document.getElementById('watchlistPanel').innerHTML = '<div class="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-100">Watchlist paneli veri bekliyor.</div>';
+    document.getElementById('portfolioPanel').innerHTML = '<div class="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-5 text-sm text-rose-100">Portfolio paneli veri bekliyor.</div>';
 }
 
 document.addEventListener('click', (event) => {
@@ -655,6 +885,31 @@ document.addEventListener('click', (event) => {
         state.filteredData = applyActiveFilters(state.rawData);
         renderActiveViews();
         return;
+    }
+
+    const actionButton = event.target.closest('[data-action]');
+    if (actionButton) {
+        const symbol = actionButton.dataset.symbol || state.selectedSymbol || null;
+        if (actionButton.dataset.action === 'toggle-watchlist') {
+            toggleWatchlistSymbol(symbol);
+            renderActiveViews();
+            return;
+        }
+
+        if (actionButton.dataset.action === 'remove-portfolio') {
+            removePortfolioPosition(symbol);
+            renderUserPanel();
+            syncPortfolioForm();
+            return;
+        }
+
+        if (actionButton.dataset.action === 'focus-portfolio') {
+            state.selectedSymbol = symbol;
+            renderActiveViews();
+            document.getElementById('portfolioPanelSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('portfolioQuantityInput').focus();
+            return;
+        }
     }
 
     const symbolButton = event.target.closest('[data-symbol]');
@@ -672,5 +927,26 @@ document.getElementById('searchInput').addEventListener('input', () => {
     applyFilter();
 });
 
+document.getElementById('portfolioForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const symbol = state.selectedSymbol;
+    const quantity = document.getElementById('portfolioQuantityInput').value;
+    const averageCost = document.getElementById('portfolioAverageCostInput').value;
+
+    if (!upsertPortfolioPosition(symbol, quantity, averageCost)) {
+        return;
+    }
+
+    renderUserPanel();
+    syncPortfolioForm();
+});
+
+document.getElementById('portfolioFormResetButton').addEventListener('click', () => {
+    document.getElementById('portfolioQuantityInput').value = '';
+    document.getElementById('portfolioAverageCostInput').value = '';
+});
+
+loadUserPanelState();
 loadMarket().catch(showError);
 setInterval(() => loadMarket().catch(showError), 60000);

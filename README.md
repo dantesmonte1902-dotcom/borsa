@@ -46,6 +46,12 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 - `/index.php` veya `/public/index.php` : ana dashboard
 - `/stock.php?symbol=BIST:ASELS` : TradingView Lightweight Charts destekli hisse detay ekranı
 
+## Yeni eklenen kullanıcı deneyimi
+
+- Dashboard üzerinde tarayıcıda kalıcı çalışan watchlist paneli
+- Seçili hisse üzerinden lot ve maliyet girilerek portföy takibi
+- Portfolio kartlarında güncel değer ve toplam getiri görünümü
+
 ## Cron örnekleri
 
 ```bash

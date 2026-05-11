@@ -136,6 +136,48 @@ require_once dirname(__DIR__) . '/bootstrap.php';
             <div id="insightGrid" class="grid gap-4"></div>
         </div>
     </section>
+
+    <section class="grid gap-6 xl:grid-cols-2">
+        <div class="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+            <div class="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-400">Kullanıcı paneli</p>
+                    <h2 class="text-2xl font-bold">Watchlist</h2>
+                </div>
+                <span id="watchlistCountBadge" class="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1 text-sm text-slate-300">0 sembol</span>
+            </div>
+            <div id="watchlistPanel" class="grid gap-3"></div>
+        </div>
+
+        <div id="portfolioPanelSection" class="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+            <div class="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm uppercase tracking-[0.25em] text-cyan-400">Kullanıcı paneli</p>
+                    <h2 class="text-2xl font-bold">Portfolio</h2>
+                </div>
+                <span id="portfolioCountBadge" class="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1 text-sm text-slate-300">0 pozisyon</span>
+            </div>
+            <form id="portfolioForm" class="mb-5 grid gap-3 rounded-3xl border border-white/10 bg-slate-950/60 p-4 sm:grid-cols-2">
+                <div class="sm:col-span-2 flex flex-wrap items-center gap-3">
+                    <span class="text-sm text-slate-400">Seçili sembol</span>
+                    <span id="portfolioSymbolBadge" class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-100">-</span>
+                </div>
+                <label class="grid gap-2">
+                    <span class="text-sm text-slate-300">Lot miktarı</span>
+                    <input id="portfolioQuantityInput" type="number" min="0" step="0.0001" placeholder="100" class="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/60">
+                </label>
+                <label class="grid gap-2">
+                    <span class="text-sm text-slate-300">Ortalama maliyet</span>
+                    <input id="portfolioAverageCostInput" type="number" min="0" step="0.0001" placeholder="24.50" class="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/60">
+                </label>
+                <div class="sm:col-span-2 flex flex-wrap gap-3">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">Pozisyonu Kaydet</button>
+                    <button id="portfolioFormResetButton" type="button" class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/30 hover:text-white">Formu Temizle</button>
+                </div>
+            </form>
+            <div id="portfolioPanel" class="grid gap-3"></div>
+        </div>
+    </section>
 </div>
 
 <script>window.BORSA_API_URL = '../api/market.php';</script>
