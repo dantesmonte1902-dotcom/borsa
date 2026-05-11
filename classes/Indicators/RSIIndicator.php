@@ -21,16 +21,25 @@ final class RSIIndicator
 
         $avgGain = array_sum(array_slice($gains, 0, $period)) / $period;
         $avgLoss = array_sum(array_slice($losses, 0, $period)) / $period;
-        $result[$period] = $avgLoss === 0.0 ? 100.0 : 100 - (100 / (1 + ($avgGain / $avgLoss)));
+        $result[$period] = self::resolveRsi($avgGain, $avgLoss);
 
         for ($i = $period + 1, $count = count($values); $i < $count; $i++) {
             $gain = $gains[$i - 1] ?? 0;
             $loss = $losses[$i - 1] ?? 0;
             $avgGain = (($avgGain * ($period - 1)) + $gain) / $period;
             $avgLoss = (($avgLoss * ($period - 1)) + $loss) / $period;
-            $result[$i] = $avgLoss === 0.0 ? 100.0 : 100 - (100 / (1 + ($avgGain / $avgLoss)));
+            $result[$i] = self::resolveRsi($avgGain, $avgLoss);
         }
 
         return $result;
+    }
+
+    private static function resolveRsi(float $avgGain, float $avgLoss): float
+    {
+        if ($avgLoss === 0.0) {
+            return 100.0;
+        }
+
+        return 100 - (100 / (1 + ($avgGain / $avgLoss)));
     }
 }

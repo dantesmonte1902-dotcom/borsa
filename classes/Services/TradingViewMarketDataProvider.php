@@ -4,6 +4,8 @@ namespace App\Services;
 
 final class TradingViewMarketDataProvider implements MarketDataProviderInterface
 {
+    private const DEFAULT_TRADING_DAYS = 252;
+
     public function __construct(private readonly HttpClient $httpClient)
     {
     }
@@ -76,7 +78,7 @@ final class TradingViewMarketDataProvider implements MarketDataProviderInterface
         $baseVolume = max($snapshot['volume'], 1.0);
         $candles = [];
 
-        for ($i = 251; $i >= 0; $i--) {
+        for ($i = self::DEFAULT_TRADING_DAYS - 1; $i >= 0; $i--) {
             $drift = sin(($i / 18)) * 0.035;
             $noise = cos(($i / 7)) * 0.012;
             $close = max(0.1, $basePrice * (1 + $drift + $noise));

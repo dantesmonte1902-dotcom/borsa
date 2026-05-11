@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS price_history (
     low_price DECIMAL(14,4) NOT NULL,
     close_price DECIMAL(14,4) NOT NULL,
     volume BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    UNIQUE KEY uniq_symbol_timeframe_time (symbol_id, timeframe, candle_time),
+    UNIQUE KEY unique_symbol_timeframe_time (symbol_id, timeframe, candle_time),
     KEY idx_price_history_symbol_time (symbol_id, candle_time)
 );
 
