@@ -5,6 +5,8 @@ const state = {
     query: '',
 };
 
+const MARKET_LIMIT = 12;
+
 const numberFormatter = new Intl.NumberFormat('tr-TR');
 const compactFormatter = new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 });
 const currencyFormatter = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -395,7 +397,7 @@ function updateTimestamp() {
 async function loadMarket() {
     setLoadingState();
 
-    const response = await fetch(`${window.BORSA_API_URL}?limit=12`, {
+    const response = await fetch(`${window.BORSA_API_URL}?limit=${MARKET_LIMIT}`, {
         headers: { Accept: 'application/json' },
     });
 
