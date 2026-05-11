@@ -57,5 +57,5 @@ php <project_root>/cron/refresh_data.php
 
 ## Türkçe kullanım kılavuzu
 
-- Ayrıntılı Türkçe kurulum ve kullanım anlatımı için `/home/runner/work/borsa/borsa/readme.txt` dosyasına bakın.
-- Kök erişim için `/home/runner/work/borsa/borsa/index.php` eklendi; `public/index.php` panelini yükler.
+- Ayrıntılı Türkçe kurulum ve kullanım anlatımı için `<project_root>/readme.txt` dosyasına bakın.
+- Kök erişim için `<project_root>/index.php` eklendi; `public/index.php` panelini yükler.
