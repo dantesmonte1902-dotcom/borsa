@@ -29,10 +29,10 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 
 ## Kurulum
 
-1. `/home/runner/work/borsa/borsa/.env.example` dosyasını `.env` olarak kopyalayın.
+1. `<project_root>/.env.example` dosyasını `.env` olarak kopyalayın.
 2. Telegram/Discord/email ve veritabanı ayarlarını doldurun.
 3. `storage/schema.sql` içeriğini MySQL/MariaDB üzerinde çalıştırın.
-4. Web kökünü mümkünse `/home/runner/work/borsa/borsa/public` dizinine yönlendirin.
+4. Web kökünü mümkünse `<project_root>/public` dizinine yönlendirin.
 
 ## API
 
@@ -42,9 +42,9 @@ Saf PHP ile geliştirilen, BIST hisseleri için tarama, teknik analiz, alarm ve 
 ## Cron örnekleri
 
 ```bash
-php /home/runner/work/borsa/borsa/cron/scan.php
-php /home/runner/work/borsa/borsa/cron/alerts.php
-php /home/runner/work/borsa/borsa/cron/refresh_data.php
+php <project_root>/cron/scan.php
+php <project_root>/cron/alerts.php
+php <project_root>/cron/refresh_data.php
 ```
 
 ## Güvenlik notları

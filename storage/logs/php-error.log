@@ -1,0 +1,18 @@
+[11-May-2026 11:29:34 Europe/Istanbul] PHP Fatal error:  Uncaught RuntimeException: Request failed for https://scanner.tradingview.com/turkey/scan: Could not resolve host: scanner.tradingview.com in /home/runner/work/borsa/borsa/classes/Services/HttpClient.php:102
+Stack trace:
+#0 /home/runner/work/borsa/borsa/classes/Services/HttpClient.php(37): App\Services\HttpClient->request()
+#1 /home/runner/work/borsa/borsa/classes/Services/HttpClient.php(24): App\Services\HttpClient->requestJson()
+#2 /home/runner/work/borsa/borsa/classes/Services/TradingViewMarketDataProvider.php(18): App\Services\HttpClient->postJson()
+#3 /home/runner/work/borsa/borsa/classes/Services/Platform.php(65): App\Services\TradingViewMarketDataProvider->listSymbols()
+#4 Command line code(1): App\Services\Platform->analyzeMarket()
+#5 {main}
+  thrown in /home/runner/work/borsa/borsa/classes/Services/HttpClient.php on line 102
+[11-May-2026 11:29:49 Europe/Istanbul] PHP Fatal error:  Uncaught RuntimeException: Request failed for https://scanner.tradingview.com/turkey/scan: Could not resolve host: scanner.tradingview.com in /home/runner/work/borsa/borsa/classes/Services/HttpClient.php:102
+Stack trace:
+#0 /home/runner/work/borsa/borsa/classes/Services/HttpClient.php(37): App\Services\HttpClient->request()
+#1 /home/runner/work/borsa/borsa/classes/Services/HttpClient.php(24): App\Services\HttpClient->requestJson()
+#2 /home/runner/work/borsa/borsa/classes/Services/TradingViewMarketDataProvider.php(18): App\Services\HttpClient->postJson()
+#3 /home/runner/work/borsa/borsa/classes/Services/Platform.php(65): App\Services\TradingViewMarketDataProvider->listSymbols()
+#4 Command line code(1): App\Services\Platform->analyzeMarket()
+#5 {main}
+  thrown in /home/runner/work/borsa/borsa/classes/Services/HttpClient.php on line 102
