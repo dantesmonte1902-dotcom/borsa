@@ -1,2 +1,2 @@
 # borsa
-borsa şeyleri
+borsa denemeleri
